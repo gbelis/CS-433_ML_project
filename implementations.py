@@ -19,12 +19,6 @@ def least_squares(y, tx, offset = False):
     B = np.inner(np.dot(np.linalg.inv(np.dot(tx.T, tx)), tx.T), y)
     return B, MSE(y, np.inner(B, tx))
 
-def ridge_regression(y, tx, lambda_, offset = False):
-    if offset:
-        tx = np.c_[np.ones((tx.shape[0], 1)), tx]
-    B = np.inner(np.dot(np.linalg.inv(np.dot(tx.T, tx) + lambda_/(2*tx.shape[0]) * np.eye(tx.shape[1])), tx.T), y)
-    return B, MSE(y, np.inner(B, tx))
-
 
 # Linear regression, MSE Loss, Gradient descent
 def mean_squared_error_gd(y, tx, initial_w, max_iters, gamma, offset = False):
@@ -58,4 +52,11 @@ def mean_squared_error_sgd(y, tx, initial_w, max_iters, gamma, batch = 2, offset
         B -= gamma * MSE_gradient(y_,tx_,B)
         hist.append(MSE(y, np.inner(B, tx)))
 
+    return B, MSE(y, np.inner(B, tx))
+
+
+def ridge_regression(y, tx, lambda_, offset = False):
+    if offset:
+        tx = np.c_[np.ones((tx.shape[0], 1)), tx]
+    B = np.inner(np.dot(np.linalg.inv(np.dot(tx.T, tx) + lambda_ * 2 * tx.shape[0] * np.eye(tx.shape[1])), tx.T), y)
     return B, MSE(y, np.inner(B, tx))
