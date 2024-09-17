@@ -4,7 +4,7 @@ def MAE(y, pred):
     return np.average(np.abs(y - pred))
 
 def MSE(y, pred):
-    return np.average((y - pred) ** 2)
+    return 0.5 * np.average((y - pred) ** 2)
 
 def MSE_gradient(y, tx, w):
     return -1/tx.shape[0]*np.inner(tx.T, y - np.inner(tx, w))
