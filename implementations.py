@@ -1,4 +1,4 @@
-import numpy as np
+from linear_models import *
 
 def MAE(y, pred):
     return np.average(np.abs(y - pred))
@@ -9,54 +9,42 @@ def MSE(y, pred):
 def MSE_gradient(y, tx, w):
     return -1/tx.shape[0]*np.inner(tx.T, y - np.inner(tx, w))
 
-def least_squares(y, tx, offset = False):
-    
-    # Adding offset
-    if offset:  
-        tx = np.c_[np.ones((tx.shape[0], 1)), tx]
-    
-    
-    B = np.inner(np.dot(np.linalg.inv(np.dot(tx.T, tx)), tx.T), y)
-    return B, MSE(y, np.inner(B, tx))
-
+def least_squares(y, tx, fit_intecept = False):
+    model = LtsqrRegression(fit_intecept = fit_intecept).fit(tx, y)
+    return model.weights, model.mse(tx, y)
 
 # Linear regression, MSE Loss, Gradient descent
-def mean_squared_error_gd(y, tx, initial_w, max_iters, gamma, offset = False):
-    
+def mean_squared_error_gd(y, tx, initial_w, max_iters, gamma, fit_intecept = False):
+    model = LinearRegression(fit_intecept = fit_intecept, gamma=gamma).fit(tx, y, initial_w = initial_w, max_iters=max_iters)
+    return model.weights, model.mse(tx, y)
+
+
+def mean_squared_error_sgd(y, tx, initial_w, max_iters, gamma, fit_intecept = False):
+    model = LinearRegression(fit_intecept = fit_intecept, gamma=gamma).fit(tx, y, initial_w = initial_w, max_iters=max_iters)
+    return model.weights, model.mse(tx, y)
+
+def ridge_regression(y, tx, lambda_ = 1, fit_intecept = False):
+    model = RidgeRegression(fit_intecept = fit_intecept, alpha = lambda_).fit(tx, y)
+    return model.weights, model.mse(tx, y)
+
+
+
+
+
+def reg_logistic_regression(y, tx, lambda_, initial_w, max_iters, gamma, offset = False, hist = False):
+        
     # Adding offset
     if offset:  
         tx = np.c_[np.ones((tx.shape[0], 1)), tx]
     B = initial_w
     hist = []
 
-    
     for _ in range(max_iters):
-        B -= gamma * MSE_gradient(y,tx,B)
+        B -= gamma * reg_log_gradient(y, tx, B, lambda_)
         hist.append(MSE(y, np.inner(B, tx)))
+    if hist:
+        return B, MSE(y, np.inner(B, tx)), hist
 
     return B, MSE(y, np.inner(B, tx))
 
 
-def mean_squared_error_sgd(y, tx, initial_w, max_iters, gamma, batch = 2, offset = False):
-    
-    # Adding offset
-    if offset:  
-        tx = np.c_[np.ones((tx.shape[0], 1)), tx]
-    B = initial_w
-    hist = []
-
-    
-    for _ in range(max_iters):
-        idx = np.random.randint(tx.shape[0], size=batch)
-        tx_, y_ = tx[idx], y[idx]
-        B -= gamma * MSE_gradient(y_,tx_,B)
-        hist.append(MSE(y, np.inner(B, tx)))
-
-    return B, MSE(y, np.inner(B, tx))
-
-
-def ridge_regression(y, tx, lambda_, offset = False):
-    if offset:
-        tx = np.c_[np.ones((tx.shape[0], 1)), tx]
-    B = np.inner(np.dot(np.linalg.inv(np.dot(tx.T, tx) + lambda_ * 2 * tx.shape[0] * np.eye(tx.shape[1])), tx.T), y)
-    return B, MSE(y, np.inner(B, tx))

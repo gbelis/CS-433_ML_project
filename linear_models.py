@@ -11,6 +11,15 @@ class Regressor:
             return np.inner(self.weights, np.c_[np.ones((X.shape[0], 1)), X])
         else:
             return np.inner(self.weights, X)
+    
+    def mse(self, X, y):
+        return 0.5 * np.average((y - np.inner(self.weights, X)) ** 2)
+    
+    def mae(self, X, y):
+        return np.average(np.abs(y - np.inner(self.weights, X)))
+    
+    def get_weights(self):
+        return self.weights
 
 
 class LogisticRegression(Regressor): 
@@ -23,20 +32,38 @@ class LinearRegression(Regressor):
         self.fit_intecept = fit_intecept
         self.weights = None
         self.gamma = gamma
+        self.loss = loss
         pass
 
-    def gradient(self, X, y, w):
+    def mse_gradient(self, X, y, w):
         return -1/X.shape[0]*np.inner(X.T, y - np.inner(X, w))
+    
 
-    def fit(self, X, y, initial_w, max_iters):
-        if self.fit_intecept:  
+    def fit(self, X, y, initial_w, max_iters, batch = None):
+        if self.fit_intecept:
             X = np.c_[np.ones((X.shape[0], 1)), X]
+        
+        if not batch:
+            batch = X.shape[0]
+
         w = initial_w
 
         for _ in range(max_iters):
-            w -= self.gamma * self.gradient(y,X,w)
+            w -= self.gamma * self.get_gradient(X,y,w)
             
-        return w, MSE(y, np.inner(w, X))
+        return w, self.mse(y, np.inner(w, X))
+    
+    def get_gradient(self):
+        if self.loss == 'mse':
+            loss = self.mse_gradient
+        elif self.loss == 'mae':
+            loss.mae_gradient
+
+    def get_loss(self):
+        if self.loss == 'mse':
+            loss = self.mse
+        elif self.loss == 'mae':
+            loss.mae
 
 
 class RidgeRegression(Regressor):
@@ -49,8 +76,8 @@ class RidgeRegression(Regressor):
     def fit(self, X, y):
         if self.fit_intecept:
             X = np.c_[np.ones((X.shape[0], 1)), X]
-        self.weights = np.inner(np.dot(np.linalg.inv(np.dot(X.T, X) + self.alpha * 2 * X.shape[0] * np.eye(X.shape[1])), X.T), y)
-        return self.weights, MSE(y, np.inner(self.weights, X))
+        self.weights = np.linalg.solve(np.dot(np.dot(X.T, X) + self.alpha * 2 * X.shape[0] * np.eye(X.shape[1]), X.T), y)
+        return self.weights, self.mse(y, np.inner(self.weights, X))
         
 
 class RidgeRegression(Regressor):
@@ -63,15 +90,18 @@ class RidgeRegression(Regressor):
         if self.fit_intecept:
             X = np.c_[np.ones((X.shape[0], 1)), X]
         self.weights = np.inner(np.dot(np.linalg.inv(np.dot(X.T, X) + self.alpha * 2 * X.shape[0] * np.eye(X.shape[1])), X.T), y)
-        return self.weights, MSE(y, np.inner(self.weights, X))
+        return self.weights, self.mse(y, np.inner(self.weights, X))
 
 
-def least_squares(y, tx, offset = False):
-    
-    # Adding offset
-    if offset:  
-        tx = np.c_[np.ones((tx.shape[0], 1)), tx]
-    
-    
-    B = np.inner(np.dot(np.linalg.inv(np.dot(tx.T, tx)), tx.T), y)
-    return B, MSE(y, np.inner(B, tx))
+class LtsqrRegression(Regressor):
+    def __init__(self, fit_intecept = True):
+        self.fit_intecept = fit_intecept
+        self.weights = None
+        pass
+
+    def fit(self, X, y):
+        if self.fit_intecept:
+            X = np.c_[np.ones((X.shape[0], 1)), X]
+        self.weights = np.linalg.solve(np.dot(X.T, X), np.inner(X.T, y))
+        return self
+
