@@ -57,7 +57,7 @@ class LinearRegression(Regressor):
         if self.loss == 'mse':
             return self.mse_gradient(X,y,w)
         elif self.loss == 'mae':
-            return mae_gradient(X,y,w)
+            return self.mae_gradient(X,y,w)
 
     def get_loss(self, X, y):
         if self.loss == 'mse':
@@ -91,7 +91,7 @@ class RidgeRegression(Regressor):
         if self.fit_intecept:
             X = np.c_[np.ones((X.shape[0], 1)), X]
         self.weights = np.inner(np.dot(np.linalg.inv(np.dot(X.T, X) + self.alpha * 2 * X.shape[0] * np.eye(X.shape[1])), X.T), y)
-        return self.weights, self.mse(y, np.inner(self.weights, X))
+        return self
 
 
 class LtsqrRegression(Regressor):
