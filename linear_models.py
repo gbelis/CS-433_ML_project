@@ -51,19 +51,19 @@ class LinearRegression(Regressor):
         for _ in range(max_iters):
             w -= self.gamma * self.get_gradient(X,y,w)
             
-        return w, self.mse(y, np.inner(w, X))
+        return self
     
-    def get_gradient(self):
+    def get_gradient(self, X,y,w):
         if self.loss == 'mse':
-            loss = self.mse_gradient
+            return self.mse_gradient(X,y,w)
         elif self.loss == 'mae':
-            loss.mae_gradient
+            return mae_gradient(X,y,w)
 
-    def get_loss(self):
+    def get_loss(self, X, y):
         if self.loss == 'mse':
-            loss = self.mse
+            loss = self.mse(X, y)
         elif self.loss == 'mae':
-            loss.mae
+            loss.mae(X, y)
 
 
 class RidgeRegression(Regressor):
@@ -81,9 +81,10 @@ class RidgeRegression(Regressor):
         
 
 class RidgeRegression(Regressor):
-    def __init__(self, fit_intecept = True):
+    def __init__(self, fit_intecept = True, alpha = None):
         self.fit_intecept = fit_intecept
         self.weights = None
+        self.alpha = alpha
         pass
 
     def fit(self, X, y):
